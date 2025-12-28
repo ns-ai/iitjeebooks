@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  
+  <style>
+    /* ------------------- Global Styles ------------------- */
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ------------------- Navbar ------------------- */
+    .navbar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,123,255,0.9);
+      padding: 14px 20px;
+      color: white;
+      font-weight: 600;
+      font-size: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(6px);
+    }
+
+    /* ------------------- PDF Container ------------------- */
+    #pdf-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .page-wrapper {
+      position: relative;
+      background: white;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .page-number {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      font-size: 12px;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+
+    /* ------------------- Loading Screen ------------------- */
+    #loading-screen {
+      position: fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
+    #loading-text { font-size:16px; color:#333; font-weight:500; margin-bottom:8px; }
+
+    #progress-container {
+      width:80%;
+      max-width:400px;
+      height:8px;
+      background:#eee;
+      border-radius:5px;
+      overflow:hidden;
+      margin-bottom:15px;
+    }
+
+    #progress { width:0%; height:100%; background:#007bff; transition: width 0.2s ease; }
+
+    #error-text { font-size:16px; color:red; font-weight:600; display:none; }
+
+    /* ------------------- Zoom Controls ------------------- */
+    #zoom-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1500;
+    }
+
+    #zoom-controls button {
+      width:50px;
+      height:50px;
+      border-radius:50%;
+      border:none;
+      background: rgba(0,123,255,0.9);
+      color:white;
+      font-size:24px;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s ease-in-out;
+    }
+
+    #zoom-controls button:hover { background:rgba(0,123,255,1); transform:scale(1.1); }
+    #zoom-controls button:active { transform:scale(0.95); }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">ALLEN Chemistry</div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div id="loading-text">Loading PDF: 0%</div>
+    <div id="progress-container"><div id="progress"></div></div>
+    <div id="error-text">⚠️ Unable to load PDF. Try again later or contact the organiser.</div>
+  </div>
+
+  <!-- PDF Container -->
+  <div id="pdf-container"></div>
+
+  <!-- Zoom Controls -->
+  <div id="zoom-controls">
+    <button id="zoom-in">+</button>
+    <button id="zoom-reset">⟳</button>
+    <button id="zoom-out">−</button>
+  </div>
+
+  <script>
+    // ------------------- PDF.js Setup -------------------
+    const url = "pdfcall.pdf"; // PDF file
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+    const container = document.getElementById("pdf-container");
+    const loadingText = document.getElementById("loading-text");
+    const progressBar = document.getElementById("progress");
+    const errorText = document.getElementById("error-text");
+    let pdfDoc = null;
+    let currentScale = 1;
+
+    // ------------------- Helper Functions -------------------
+    function computeBaseScale(page) {
+      const viewport = page.getViewport({ scale: 1 });
+      const containerWidth = container.clientWidth - 20;
+      return containerWidth / viewport.width;
+    }
+
+    function renderPage(num, canvas) {
+      return pdfDoc.getPage(num).then(page => {
+        const baseScale = computeBaseScale(page);
+        const viewport = page.getViewport({ scale: baseScale * currentScale });
+
+        const context = canvas.getContext("2d");
+        const outputScale = window.devicePixelRatio || 1;
+
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = viewport.width + "px";
+        canvas.style.height = viewport.height + "px";
+
+        context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+
+        return page.render({ canvasContext: context, viewport }).promise;
+      });
+    }
+
+    function getZoomStep() {
+      if(window.innerWidth >= 1024) return 0.5;   // desktop
+      else if(window.innerWidth >= 600) return 0.3; // tablet
+      else return 0.2;                             // phone
+    }
+
+    function rerenderAllPages(){
+      document.querySelectorAll("canvas").forEach(canvas=>{
+        const pageNum = parseInt(canvas.dataset.pageNum);
+        renderPage(pageNum, canvas);
+      });
+    }
+
+    // ------------------- Load PDF -------------------
+    const loadingTask = pdfjsLib.getDocument({ url, rangeChunkSize: 65536 });
+
+    loadingTask.onProgress = function(progress) {
+      if(progress.total){
+        const percent = Math.round((progress.loaded / progress.total) * 100);
+        loadingText.textContent = `Loading PDF: ${percent}%`;
+        progressBar.style.width = percent + "%";
+      }
+    };
+
+    loadingTask.promise.then(pdf => {
+      pdfDoc = pdf;
+
+      // Create page wrappers
+      for(let i=1;i<=pdf.numPages;i++){
+        const wrapper = document.createElement("div");
+        wrapper.className = "page-wrapper";
+
+        const canvas = document.createElement("canvas");
+        canvas.id = "page-" + i;
+        canvas.dataset.pageNum = i;
+        canvas.style.minHeight = "500px";
+        canvas.oncontextmenu = () => false;
+        canvas.setAttribute("draggable","false");
+
+        const label = document.createElement("div");
+        label.className = "page-number";
+        label.textContent = i + " / " + pdf.numPages;
+
+        wrapper.appendChild(canvas);
+        wrapper.appendChild(label);
+        container.appendChild(wrapper);
+      }
+
+      // Preload first 3 pages
+      const preloadCount = Math.min(3, pdf.numPages);
+      const preloadPromises = [];
+      for(let i=1;i<=preloadCount;i++){
+        const canvas = document.getElementById("page-"+i);
+        preloadPromises.push(renderPage(i, canvas));
+      }
+
+      Promise.all(preloadPromises).then(()=> {
+        document.getElementById("loading-screen").style.display="none";
+      });
+
+      // Lazy load remaining pages
+      const observer = new IntersectionObserver(entries=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){
+            const canvas = entry.target;
+            const pageNum = parseInt(canvas.dataset.pageNum);
+            if(!canvas.dataset.rendered){
+              renderPage(pageNum, canvas);
+              canvas.dataset.rendered=true;
+            }
+          }
+        });
+      },{ rootMargin:"1000px", threshold:0.1 });
+
+      document.querySelectorAll("canvas").forEach(canvas=>{
+        if(parseInt(canvas.dataset.pageNum) > preloadCount) observer.observe(canvas);
+      });
+
+    }).catch(err=>{
+      console.error("PDF loading error:", err);
+      document.querySelector(".loader").style.display="none";
+      loadingText.style.display="none";
+      progressBar.style.display="none";
+      errorText.style.display="block";
+    });
+
+    // ------------------- Zoom Controls -------------------
+    document.getElementById("zoom-in").addEventListener("click",()=>{ currentScale += getZoomStep(); rerenderAllPages(); });
+    document.getElementById("zoom-out").addEventListener("click",()=>{ if(currentScale>getZoomStep()){ currentScale -= getZoomStep(); rerenderAllPages(); }});
+    document.getElementById("zoom-reset").addEventListener("click",()=>{ currentScale = 1; rerenderAllPages(); });
+
+    // ------------------- Protection -------------------
+    document.addEventListener("contextmenu", e=> e.preventDefault());
+    document.addEventListener("keydown", e=>{
+      if((e.ctrlKey && ["s","p","u"].includes(e.key.toLowerCase())) || e.key==="F12" || e.key==="PrintScreen"){
+        e.preventDefault(); alert("Action disabled!");
+      }
+    });
+
+  </script>
+</body>
+</html>
