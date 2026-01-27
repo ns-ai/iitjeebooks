@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact Us</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="./Styling/Favicon/Favicon.png">
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans&display=swap" rel="stylesheet">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        /* ---------- Reset ---------- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main Logo */
+        .main-logo {
+            text-align: center;
+            margin: 35px 0 20px;
+        }
+
+        .main-logo img {
+            height: 150px;
+        }
+
+
+        /* ---------- Blue Background (Same Theme) ---------- */
+        body {
+            font-family: 'PT Sans', sans-serif;
+            min-height: 100vh;
+            color: #0f172a;
+
+            background: linear-gradient(
+                135deg,
+                #0096c7,
+                #0077b6,
+                #023e8a
+            );
+        }
+
+        /* ---------- Layout ---------- */
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 30px 20px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+        }
+
+        /* ---------- Header ---------- */
+        header {
+            text-align: center;
+            padding: 45px 20px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.6rem;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 170px;
+        }
+
+        /* ---------- Text ---------- */
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        /* ---------- Form ---------- */
+        form {
+            text-align: left;
+        }
+
+        label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 20px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        /* ---------- Buttons ---------- */
+        .btn {
+            display: inline-block;
+            padding: 14px 36px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            border-radius: 999px;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: white;
+            box-shadow: 0 12px 26px rgba(29,78,216,0.5);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 36px rgba(29,78,216,0.65);
+        }
+
+        /* ---------- Footer ---------- */
+        footer {
+            text-align: center;
+            padding: 25px;
+            background: rgba(0,0,0,0.15);
+            font-size: 1.05rem;
+            color: white;
+        }
+
+        /* ---------- Mobile ---------- */
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2.1rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            p {
+                font-size: 1.05rem;
+            }
+
+            .card {
+                padding: 30px 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="main-logo">
+    <img src="./Styling/Logo_fav1.png" alt="Main Logo">
+    <h1>IIT JEE Books</h1>
+    <p><b>A NeverSettel distribution</b></p>
+  </div>
+</header>
+
+<main class="container">
+
+    <section class="section">
+        <div class="card">
+            <h2>Contact Us</h2>
+            <p>
+                <b>Facing any problem..? or need any help.. Contact Us.</b>
+            </p>
+
+            <form action="https://formsubmit.co/31dc6d5325115b91a7a8ba80636ab1fd"
+                  method="POST"
+                  onsubmit="return;">
+
+                <label for="service">Select Purpose</label>
+                <select name="Service" id="service" required>
+                    <option value="">-- Select Purpose --</option>
+                    <option>Share Experience😊</option>
+                    <option>Want to Donate😁</option>
+                    <option>Other(Any problem...)</option>
+                </select>
+
+                <label for="name">Your Name</label>
+                <input type="text" id="name" name="Name"
+                       placeholder="Your name"
+                       maxlength="20" required>
+
+                <label for="email">Your Email</label>
+                <input type="email" id="email" name="Email"
+                       placeholder="(optional) only if u want a reply">
+
+                <label for="message">Your Message</label>
+                <textarea id="message" name="Message"
+                          placeholder="Write your message here..." required></textarea>
+
+                <button type="submit" class="btn btn-primary">
+                    Submit
+                </button>
+            
+            <p>
+                <br><b>By clicking on Submit... it will rederict u to Formsubmit... It is just a human verification window (CAPTCHA - To avoid spams)... U can return back once its done..</b>
+            </p>
+
+            </form>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <b>© Never Settel— All rights are reserved</b>
+</footer>
+<script>
+    // ------------------- Protection -------------------
+    document.addEventListener("contextmenu", e=> e.preventDefault());
+    document.addEventListener("keydown", e=>{
+      if((e.ctrlKey && ["s","p","u"].includes(e.key.toLowerCase())) || e.key==="F12" || e.key==="PrintScreen"){
+        e.preventDefault(); alert("Action disabled!");
+      }
+    });
+</script>
+
+</body>
+</html>
